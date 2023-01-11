@@ -17,8 +17,8 @@ import {
     PrivateKeyProviderConnector
 } from '@1inch/limit-order-protocol-utils';
 
-let infuraKey = "...";
-const web3 = new Web3('https://mainnet.infura.io/v3/' + infuraKey);
+
+const web3 = new Web3('https://cloudflare-eth.com/'); // can use any web3 RPC provider
 const connector = new PrivateKeyProviderConnector("...", web3); //it's usually best not to store the private key in the code as plain text, encrypting/decrypting it is a good practice
 const walletAddress = "..."
 const chainId = 1; // suggested, or use your own number
@@ -38,7 +38,7 @@ const seriesNonceManagerFacade = new SeriesNonceManagerFacade(seriesContractAddr
 const seriesNonceManagerPredicateBuilder = new SeriesNonceManagerPredicateBuilder(seriesNonceManagerFacade);
 const limitOrderPredicateBuilder = new LimitOrderPredicateBuilder(limitOrderProtocolFacade);
 const erc20Facade = new Erc20Facade(connector);
-const limitOrderBuilder = new LimitOrderBuilder(limitOrderProtocolFacade, erc20Facade);
+const limitOrderBuilder = new LimitOrderBuilder(contractAddress, chainId, connector);
 
 const expiration = Math.floor(Date.now() / 1000) + seconds; // expiration in seconds
 // const nonce = seriesNonceManagerFacade.getNonce(NonceSeriesV2.LimitOrderV3, walletAddress).then((nonce) => nonce.toNumber());
@@ -75,7 +75,7 @@ async function getSignatureAndHash() {
         limitOrder,
     );
     const limitOrderSignature = await limitOrderBuilder.buildOrderSignature(
-        connector,
+        walletAddress,
         limitOrderTypedData,
     );
 
@@ -102,7 +102,7 @@ async function orderPlace() {
     const data = {
         "orderHash": limitOrderHash,
         "signature": signature,
-        "data": limitOrderData
+        "data": limitOrder // defined outside the scope of this function (above)
     }
     console.log(JSON.stringify(data, null, 2));
 
@@ -114,7 +114,6 @@ async function orderPlace() {
         "data": JSON.stringify(data),
         "method": "POST"
     }).then((res) => {
-        console.log(res.status);
         return res.json()
     }).then((jsonData => {
         console.log(jsonData);
