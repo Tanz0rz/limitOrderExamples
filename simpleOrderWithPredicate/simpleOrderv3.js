@@ -1,6 +1,6 @@
 // using node 14.21.12
 import fetch from 'node-fetch'; // specifically version node-fetch@2.6.7
-
+// don't forget to install ts-node and tslib
 import Web3 from 'web3';
 import {
     limirOrderProtocolAdresses, // deliberately misspelled
