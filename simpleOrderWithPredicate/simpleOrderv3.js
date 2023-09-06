@@ -1,28 +1,29 @@
 // using node 14.21.12
 import fetch from 'node-fetch'; // specifically version node-fetch@2.6.7
-// don't forget to install ts-node and tslib
+
 import Web3 from 'web3';
 import {
-    limirOrderProtocolAdresses, // deliberately misspelled
+    limitOrderProtocolAddresses,
     seriesNonceManagerContractAddresses,
     ChainId,
     Erc20Facade,
     LimitOrderBuilder,
     LimitOrderProtocolFacade,
     LimitOrderPredicateBuilder,
-    NonceSeriesV2,
+    NonceSeriesV2,  
     SeriesNonceManagerFacade,
     SeriesNonceManagerPredicateBuilder,
     Web3ProviderConnector, // used for interfaces
     PrivateKeyProviderConnector
 } from '@1inch/limit-order-protocol-utils';
 
-
-const web3 = new Web3('https://cloudflare-eth.com/'); // can use any web3 RPC provider
-const connector = new PrivateKeyProviderConnector("...", web3); //it's usually best not to store the private key in the code as plain text, encrypting/decrypting it is a good practice
-const walletAddress = "..."
+let infuraKey = "...";
+let inchDevApiKey = "...";
+const web3 = new Web3('https://mainnet.infura.io/v3/' + infuraKey);
+const connector = new PrivateKeyProviderConnector("private key without the 0x", web3); //it's usually best not to store the private key in the code as plain text, encrypting/decrypting it is a good practice
+const walletAddress = "..." // the public address associated with your private key
 const chainId = 1; // suggested, or use your own number
-const contractAddress = limirOrderProtocolAdresses[chainId];
+const contractAddress = limitOrderProtocolAddresses[chainId];
 const seriesContractAddress = seriesNonceManagerContractAddresses[chainId];
 
 
@@ -38,6 +39,7 @@ const seriesNonceManagerFacade = new SeriesNonceManagerFacade(seriesContractAddr
 const seriesNonceManagerPredicateBuilder = new SeriesNonceManagerPredicateBuilder(seriesNonceManagerFacade);
 const limitOrderPredicateBuilder = new LimitOrderPredicateBuilder(limitOrderProtocolFacade);
 const erc20Facade = new Erc20Facade(connector);
+// const limitOrderBuilder = new LimitOrderBuilder(limitOrderProtocolFacade, erc20Facade);
 const limitOrderBuilder = new LimitOrderBuilder(contractAddress, chainId, connector);
 
 const expiration = Math.floor(Date.now() / 1000) + seconds; // expiration in seconds
@@ -63,7 +65,7 @@ const limitOrder = limitOrderBuilder.buildLimitOrder({
     makingAmount: fromAmount,
     takingAmount: toAmount,
     predicate: simpleLimitOrderPredicate,
-    salt: Math.floor(Math.random()*100000000),
+    salt: "" + Math.floor(Math.random()*100000000),
 });
 
 console.log(limitOrder)
@@ -75,7 +77,7 @@ async function getSignatureAndHash() {
         limitOrder,
     );
     const limitOrderSignature = await limitOrderBuilder.buildOrderSignature(
-        walletAddress,
+        connector,
         limitOrderTypedData,
     );
 
@@ -102,18 +104,20 @@ async function orderPlace() {
     const data = {
         "orderHash": limitOrderHash,
         "signature": signature,
-        "data": limitOrder // defined outside the scope of this function (above)
+        "data": limitOrder
     }
     console.log(JSON.stringify(data, null, 2));
 
-    let fetchPromise = await fetch("https://limit-orders.1inch.io/v3.0/1/limit-order", {
+    let fetchPromise = await fetch("https://api.1inch.dev/orderbook/v3.0/1", {
         "headers": {
             "accept": "application/json, text/plain, */*",
             "content-type": "application/json",
+            "Authorization": "Bearer " + inchDevApiKey,
         },
-        "data": JSON.stringify(data),
+        "body": JSON.stringify(data),
         "method": "POST"
     }).then((res) => {
+        console.log(res.status);
         return res.json()
     }).then((jsonData => {
         console.log(jsonData);
