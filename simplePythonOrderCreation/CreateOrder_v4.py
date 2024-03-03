@@ -177,10 +177,14 @@ series = 0                                          # series of the order, used 
 has_extension = interactions != "0x"                # if the interactions are not empty, then the order has an extension
 makerTraits = build_makerTraits(nullAddress, False, False, False, has_extension, False, False, expiration, nonce, series)
 
-
-
-# we'll just make salt the current time in seconds with no decimals, okay as long as you don't place more than one order within the same second
-salt = int(time.time())
+extension = build_extension(interactions, offsets)
+# in javascript
+#  salt = BigInt(keccak256(extension)) & ((1n << 160n) - 1n); // Use 160 bit of extension hash
+# salt should be a 160 bits of the keccak hash of the extension
+if not has_extension:
+    salt = w3.keccak(time.time()) & ((1 << 160) - 1)
+else: 
+    salt = int.from_bytes(w3.keccak(hexstr=extension), 'big') & ((1 << 160) - 1)
 
 order_data = {
     "salt": (salt),
@@ -191,7 +195,7 @@ order_data = {
     "makingAmount": (makingAmount),
     "takingAmount": (takingAmount),
     "makerTraits": (makerTraits),
-    "extension": build_extension(interactions, offsets),
+    "extension": (extension)
 }
 
 
@@ -237,7 +241,7 @@ message_types = {
 encoded_message = encode_typed_data(domain_data, message_types, order_data ) #new method, but doesn't work, tests fail
 signed_message = w3.eth.account.sign_message(encoded_message, wallet_key)
 
-# make sure everything in the order_data is a string except for salt
+# make sure everything in the order_data is a string for the API
 for key in order_data:
     order_data[key] = str(order_data[key])
 
