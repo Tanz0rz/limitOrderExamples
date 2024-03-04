@@ -17,11 +17,11 @@ import {
     PrivateKeyProviderConnector
 } from '@1inch/limit-order-protocol-utils';
 
-let infuraKey = "";
-let inchDevApiKey = "";
+let infuraKey = "...";
+let inchDevApiKey = "...";
 const web3 = new Web3('https://mainnet.infura.io/v3/' + infuraKey);
-const connector = new PrivateKeyProviderConnector("", web3); //it's usually best not to store the private key in the code as plain text, encrypting/decrypting it is a good practice
-const walletAddress = "" // the public address associated with your private key
+const connector = new PrivateKeyProviderConnector("private key without the 0x", web3); //it's usually best not to store the private key in the code as plain text, encrypting/decrypting it is a good practice
+const walletAddress = "..." // the public address associated with your private key
 const chainId = 1; // suggested, or use your own number
 const contractAddress = limitOrderProtocolAddresses[chainId];
 const seriesContractAddress = seriesNonceManagerContractAddresses[chainId];
