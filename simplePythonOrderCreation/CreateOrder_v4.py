@@ -182,7 +182,9 @@ extension = build_extension(interactions, offsets)
 #  salt = BigInt(keccak256(extension)) & ((1n << 160n) - 1n); // Use 160 bit of extension hash
 # salt should be a 160 bits of the keccak hash of the extension
 if not has_extension:
-    salt = w3.keccak(time.time()) & ((1 << 160) - 1)
+    current_time = int(time.time())  # Convert time to an integer to avoid floating-point precision issues
+    salt_bytes = current_time.to_bytes(32, 'big')  # Convert the integer timestamp to bytes
+    salt = int.from_bytes(w3.keccak(salt_bytes), 'big') & ((1 << 160) - 1)
 else: 
     salt = int.from_bytes(w3.keccak(hexstr=extension), 'big') & ((1 << 160) - 1)
 
